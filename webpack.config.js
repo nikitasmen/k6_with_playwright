@@ -3,6 +3,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const GlobEntries = require('webpack-glob-entries');
 const { IgnorePlugin } = require('webpack');
+const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
     mode: 'production',
@@ -16,17 +17,34 @@ module.exports = {
         extensions: ['.ts', '.js'],
         alias: {
             "@pages": path.resolve(__dirname, 'src', 'pages'),
+        },
+        fallback: {
+            "child_process": false, 
+            "https": require.resolve("https-browserify"),
+            "os": require.resolve("os-browserify/browser"),
+            "constants": require.resolve("constants-browserify"),
+            "stream": require.resolve("stream-browserify"),
+            "path": require.resolve("path-browserify"),
+            "buffer": require.resolve("buffer/"), 
+            "zlib": require.resolve("browserify-zlib"), 
+            "tty": require.resolve("tty-browserify"), 
+            "crypto": require.resolve("crypto-browserify"), 
+            "process": require.resolve("process/browser"), 
+            "url": require.resolve("url/"), 
+            "fs": false // Disable fs polyfill as it's not recommended in the browser
         }
     },
     module: {
         rules: [
-            {
-                test: /\.ts$/,
-                use: 'babel-loader',
-                exclude: /node_modules/,
+          {
+            test: /\.(js|ts|jsx)$/,
+            exclude: /node_modules/,
+            use: {
+              loader: 'babel-loader',
             },
+          },
         ],
-    },
+    }, 
     target: 'web',
     externals: /^(k6|https?\:\/\/)(\/.*)?/,
     // Generate map files for compiled scripts
@@ -49,4 +67,6 @@ module.exports = {
         // Don't minimize, as it's not used in the browser
         minimize: false,
     },
+    externalsPresets: { node: true }, // Consider using this option instead of manually specifying 'externals'
+    externals: [nodeExternals()],
 };
